@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Escape Editor v27</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #1a1a2e; color: #e0e0e0; display: flex; padding: 20px; gap: 30px; height: 100vh; margin: 0; box-sizing: border-box; }
+        .editor-panel, .preview-panel { background-color: #16213e; padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .editor-panel { width: 45%; display: flex; flex-direction: column; overflow-y: auto; }
+        .preview-panel { width: 55%; display: flex; flex-direction: column; position: relative; padding-bottom: 40px;}
+        
+        h1, h2 { color: #f39c12; font-weight: 700; letter-spacing: 1px; font-size: 26px; margin-top: 0; text-align: center; }
+        h3 { color: #a1c4fd; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #535c91; padding-bottom: 5px; margin-top: 20px;}
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #b3b3b3;}
+        input[type="text"], input[type="url"], input[type="number"], input[type="color"], select, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #535c91; background-color: #0f3460; color: #fff; box-sizing: border-box; font-family: 'Poppins', sans-serif; font-size: 13px; }
+        input[type="color"] { height: 42px; padding: 2px; cursor: pointer; }
+        textarea { resize: vertical; min-height: 140px; white-space: pre; overflow-wrap: normal; overflow-x: auto;}
+        
+        .flex-row { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; }
+        
+        #previewFrame { width: 100%; flex: 1; border: 2px solid #535c91; border-radius: 10px; background-color: #000; }
+        button.gen-btn { background: #f39c12; color: #1a1a2e; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 700; transition: 0.2s; letter-spacing: 1px;}
+        button.gen-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4); }
+        
+        #generated-code { height: 60px; margin-top: 10px; color: #a7d129; font-family: monospace; font-size: 11px;}
+        .copyright { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 12px; color: rgba(255, 255, 255, 0.5); }
+
+        .mini-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: #0f3460; padding: 5px; border-radius: 8px; border: 1px solid #535c91; width: 100%; max-width: 400px; margin-bottom: 15px;}
+        .m-cell { aspect-ratio: 1; background: #16213e; border: 1px solid #2a3b61; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: 0.2s;}
+        .m-cell:hover { background: #f39c12; }
+        .m-cell.start { background: #2ecc71; cursor: not-allowed; }
+        .m-cell.exit { background: #e74c3c; box-shadow: 0 0 10px #e74c3c;}
+    </style>
+</head>
+<body>
+
+    <div class="editor-panel">
+        <h1>Dungeon Escape Editor</h1>
+        
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Название игры</label>
+                <input type="text" id="gameTitle" value="HORROR MANSION">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Шрифт Заголовков</label>
+                <select id="titleFontFamily" class="font-selector"></select>
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="form-group" style="flex:2;">
+                <label>Текст кнопки СТАРТ</label>
+                <input type="text" id="startText" value="START EXPLORING">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Цвет Акцента</label>
+                <input type="color" id="startColor" value="#f39c12">
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Язык системных кнопок</label>
+                <select id="uiLang">
+                    <option value="EN">English</option>
+                    <option value="RU">Русский</option>
+                    <option value="ES">Español</option>
+                    <option value="FR">Français</option>
+                    <option value="DE">Deutsch</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Шрифт для Заданий</label>
+                <select id="qFontFamily" class="font-selector"></select>
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Картинка игрока (Ссылка)</label>
+                <input type="text" id="playerImg" value="https://i.postimg.cc/TwfvJZhB/fiska.png">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Фон игры (Ссылка)</label>
+                <input type="text" id="bgUrl" value="https://i.postimg.cc/hj7TFTLk/49581d354f7fe9e4db35c30ef5f33045-d4e8a47e-5a0e-4a7d-b8ae-c0020c60d2cc.jpg">
+            </div>
+        </div>
+        
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Кол-во жизней</label>
+                <input type="number" id="maxLives" value="3" min="1" max="10">
+            </div>
+            <div class="form-group" style="flex:2;">
+                <label>Картинка жизни (Ссылка или Эмодзи ❤️)</label>
+                <input type="text" id="lifeImg" value="❤️">
+            </div>
+        </div>
+
+        <h3>Игровое поле и Монстр</h3>
+        <div class="flex-row">
+            <div style="flex: 1;">
+                <label>Кликните, чтобы поставить выход</label>
+                <div class="mini-grid" id="miniGridUI"></div>
+            </div>
+            <div style="flex: 1;">
+                <div class="form-group">
+                    <label>Картинка Привидения (Ссылка)</label>
+                    <input type="text" id="monsterImg" value="https://i.postimg.cc/XYTD97Dv/ghost-(2).png">
+                </div>
+                <div class="form-group">
+                    <label>Звук Монстра (Ссылка)</label>
+                    <input type="text" id="monsterSound" value="https://actions.google.com/sounds/v1/horror/monster_zombie_growl.ogg">
+                </div>
+                <div class="form-group">
+                    <label>Время таймера (сек)</label>
+                    <input type="number" id="timerSec" value="15" min="3" max="60">
+                </div>
+            </div>
+        </div>
+
+        <h3>Вопросы</h3>
+        <div class="flex-row" style="align-items: flex-start;">
+            <div class="form-group" style="flex:1;">
+                <label>ВОПРОСЫ (в столбик)</label>
+                <textarea id="qList">Write the past tense of GO:
+Which is correct?
+Find the mistake: I seed it.
+Translate: Призрак
+Translate: Летучая мышь</textarea>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>ОТВЕТЫ (Первый верный!)</label>
+                <textarea id="aList">went | goed | gone
+bigger | more big | much big
+saw | seen | seing
+ghost | zombie | vampire
+bat | bird | mouse</textarea>
+            </div>
+        </div>
+
+        <h3>Финал (Победа и Поражение)</h3>
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Сообщение при победе</label>
+                <input type="text" id="winText" value="You escaped the mansion!">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Фон при победе (опционально)</label>
+                <input type="text" id="winBg" placeholder="Оставьте пустым для черного фона">
+            </div>
+        </div>
+        <div class="flex-row">
+            <div class="form-group" style="flex:1;">
+                <label>Сообщение при поражении</label>
+                <input type="text" id="loseText" value="YOU DIED IN THE DARKNESS">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Фон при поражении (опционально)</label>
+                <input type="text" id="loseBg" placeholder="Оставьте пустым для черного фона">
+            </div>
+        </div>
+        
+        <button class="gen-btn" id="copyBtn" onclick="copyCode()" style="width: 100%; margin-top:10px;">СГЕНЕРИРОВАТЬ КОД</button>
+        <textarea id="generated-code" readonly placeholder="Здесь появится готовый код..."></textarea>
+    </div>
+
+    <div class="preview-panel">
+        <h2>Предпросмотр</h2>
+        <iframe id="previewFrame" src="" frameborder="0" allow="autoplay"></iframe>
+        <p class="copyright">©2026 Alina Pogudina @ELT_workshop</p>
+    </div>
+
+    <script>
+        const fontOptions = `
+            <option value="'Montserrat', sans-serif">Montserrat (Базовый)</option>
+            <option value="'Russo One', sans-serif" selected>Russo One (Мощный)</option>
+            <option value="'Creepster', system-ui">Creepster (Хоррор)</option>
+            <option value="'Caveat', cursive">Caveat (Рукописный)</option>
+            <option value="'Amatic SC', cursive">Amatic SC (Тонкий хоррор)</option>
+            <option value="'Neucha', cursive">Neucha (Мягкий маркер)</option>
+            <option value="'Comic Neue', cursive">Comic Neue (Комикс)</option>
+            <option value="'Playfair Display', serif">Playfair (Элегантный)</option>
+            <option value="'Oswald', sans-serif">Oswald (Узкий)</option>
+            <option value="'Lobster', cursive">Lobster (Ретро)</option>
+            <option value="'Pacifico', cursive">Pacifico (Кисть)</option>
+            <option value="'Comfortaa', sans-serif">Comfortaa (Округлый)</option>
+            <option value="'Bebas Neue', sans-serif">Bebas Neue (Плакатный)</option>
+            <option value="'Righteous', cursive">Righteous (Футуристичный)</option>
+            <option value="'Permanent Marker', cursive">Permanent Marker (Маркер)</option>
+            <option value="'Cinzel', serif">Cinzel (Кино/Эпик)</option>
+            <option value="'Press Start 2P', system-ui">Press Start 2P (Пиксельный 8-bit)</option>
+            <option value="'Anton', sans-serif">Anton (Жирный гротеск)</option>
+            <option value="'Dancing Script', cursive">Dancing Script (Каллиграфия)</option>
+            <option value="'Josefin Sans', sans-serif">Josefin Sans (Геометрический)</option>
+        `;
+        document.querySelectorAll('.font-selector').forEach(select => select.innerHTML = fontOptions);
+        document.getElementById('qFontFamily').value = "'Montserrat', sans-serif"; 
+
+        let exitX = 9, exitY = 5;
+
+        function renderMiniGrid() {
+            const mg = document.getElementById('miniGridUI');
+            mg.innerHTML = '';
+            for(let y=0; y<6; y++) { 
+                for(let x=0; x<10; x++) { 
+                    let cell = document.createElement('div');
+                    cell.className = 'm-cell';
+                    if(x===0 && y===0) { cell.classList.add('start'); cell.innerText = 'S'; } 
+                    else if (x===exitX && y===exitY) { cell.classList.add('exit'); cell.innerText = '🚪'; } 
+                    else { cell.onclick = () => { exitX = x; exitY = y; renderMiniGrid(); debounceGenerate(); }; }
+                    mg.appendChild(cell);
+                }
+            }
+        }
+        renderMiniGrid();
+
+        function getInputs() {
+            let tasks = [];
+            let qLines = document.getElementById('qList').value.split('\n');
+            let aLines = document.getElementById('aList').value.split('\n');
+
+            for(let i=0; i<qLines.length; i++) {
+                let q = qLines[i].trim();
+                if(!q) continue; 
+                let ansString = aLines[i] ? aLines[i].trim() : "";
+                if (ansString === "") tasks.push({ type: 'discuss', q: q });
+                else if (!ansString.includes('|')) tasks.push({ type: 'fill', q: q, c: ansString });
+                else {
+                    let parts = ansString.split('|').map(s=>s.trim()).filter(s=>s);
+                    tasks.push({ type: 'quiz', q: q, c: parts[0], w: parts.slice(1) });
+                }
+            }
+            if(tasks.length === 0) tasks = [{type: 'discuss', q: "No tasks configured!"}];
+
+            return {
+                lang: document.getElementById('uiLang').value,
+                title: document.getElementById('gameTitle').value,
+                startText: document.getElementById('startText').value || 'START',
+                startColor: document.getElementById('startColor').value || '#f39c12',
+                titleFont: document.getElementById('titleFontFamily').value,
+                qFont: document.getElementById('qFontFamily').value,
+                playerImg: document.getElementById('playerImg').value || 'https://i.postimg.cc/TwfvJZhB/fiska.png',
+                monsterImg: document.getElementById('monsterImg').value || 'https://i.postimg.cc/XYTD97Dv/ghost-(2).png',
+                timer: document.getElementById('timerSec').value || 15,
+                monsterSound: document.getElementById('monsterSound').value || '',
+                maxLives: document.getElementById('maxLives').value || 3,
+                lifeImg: document.getElementById('lifeImg').value || '❤️',
+                exitX: exitX, exitY: exitY, tasks: tasks,
+                bgUrl: document.getElementById('bgUrl').value || 'https://i.postimg.cc/hj7TFTLk/49581d354f7fe9e4db35c30ef5f33045-d4e8a47e-5a0e-4a7d-b8ae-c0020c60d2cc.jpg',
+                winText: document.getElementById('winText').value,
+                winBg: document.getElementById('winBg').value,
+                loseText: document.getElementById('loseText').value || 'YOU DIED',
+                loseBg: document.getElementById('loseBg').value
+            };
+        }
+
+        function generateCode() {
+            const conf = getInputs();
+            let winBgStyle = conf.winBg ? `background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('${conf.winBg}') center/cover no-repeat !important;` : `background: #111 !important;`;
+            let loseBgStyle = conf.loseBg ? `background: linear-gradient(rgba(100,0,0,0.6), rgba(50,0,0,0.9)), url('${conf.loseBg}') center/cover no-repeat !important;` : `background: #1a0505 !important; border-color: #e50914 !important;`;
+
+            const safeHtmlCode = `<!DOCTYPE html>
+<html lang="${conf.lang.toLowerCase()}">
+<head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Anton&family=Bebas+Neue&family=Caveat:wght@700&family=Cinzel:wght@700&family=Comic+Neue:wght@700&family=Comfortaa:wght@700&family=Creepster&family=Dancing+Script:wght@700&family=Josefin+Sans:wght@700&family=Lobster&family=Montserrat:wght@700;800&family=Neucha&family=Oswald:wght@500&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@700&family=Press+Start+2P&family=Righteous&family=Russo+One&display=swap');
+    
+    html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow: hidden !important; background: #000 !important; font-family: 'Montserrat', sans-serif !important;}
+    #game-container { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; background: url('${conf.bgUrl}') center/cover no-repeat !important; user-select: none !important; box-sizing: border-box !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+    #game-container::before { content: '' !important; position: absolute !important; inset: 0 !important; background: rgba(0,0,0,0.15) !important; pointer-events: none !important; z-index: 1 !important; transition: opacity 1.5s ease !important; }
+    #game-container.game-won::before { opacity: 0 !important; }
+    #game-container:focus { outline: none !important; }
+    * { box-sizing: border-box !important; }
+
+    .top-bar { position: absolute !important; top: 10px !important; left: 15px !important; z-index: 200 !important; pointer-events: none !important;}
+    .lives { display: flex !important; gap: 4px !important; align-items: center; }
+    .heart { width: 30px !important; height: 30px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 26px !important; filter: drop-shadow(0 0 5px rgba(0,0,0,0.9)) !important; transition: 0.3s !important; }
+    .heart.lost { filter: grayscale(1) opacity(0.2) !important; }
+
+    .grid-board { position: absolute !important; top: 15px !important; left: 15px !important; right: 15px !important; bottom: 15px !important; display: grid !important; grid-template-columns: repeat(10, 1fr) !important; grid-template-rows: repeat(6, 1fr) !important; background: transparent !important; z-index: 10 !important; gap: 4px !important; }
+    .cell { position: relative !important; background: #080808 !important; border-radius: 6px !important; border: 1px solid rgba(255, 215, 0, 0.5) !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: background 0.8s ease, box-shadow 0.8s ease, border-color 0.8s ease !important; cursor: pointer !important; box-shadow: 0 0 15px 9px rgba(255, 215, 0, 0.25), inset 0 0 20px #000 !important; z-index: 5 !important;}
+    .cell.visited { background: rgba(0, 0, 0, 0.1) !important; border-color: rgba(255, 255, 255, 0.05) !important; box-shadow: none !important; z-index: 1 !important; }
+    .cell.monster-active { z-index: 9999 !important; }
+    .cell .exit-door { font-size: clamp(20px, 4vw, 40px) !important; opacity: 0 !important; transition: 0.5s !important; position: absolute !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)) !important;}
+    .cell.visited .exit-door { opacity: 1 !important; }
+    .cell.door-glow { background: rgba(255, 215, 0, 0.2) !important; border-color: #fff !important; box-shadow: 0 0 40px 15px rgba(255, 215, 0, 0.8), inset 0 0 20px #f39c12 !important; z-index: 150 !important; }
+
+    .player { position: absolute !important; top: 50% !important; left: 50% !important; width: 70% !important; height: 70% !important; object-fit: contain !important; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)) !important; transition: transform 0.2s ease, opacity 1s ease !important; z-index: 100 !important; pointer-events: none !important; }
+
+    .jump-ghost { position: absolute !important; top: 50% !important; left: 50% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 20 !important; opacity: 0 !important; transform: translate(-50%, -50%) scale(0.1); filter: drop-shadow(0 0 20px #e50914) !important; }
+    .jump-ghost.scare { opacity: 1 !important; transform: translate(calc(-50% + var(--ox)), calc(-50% + var(--oy))) scale(8) !important; transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; z-index: 200 !important; }
+    .jump-ghost.shrink { opacity: 1 !important; transform: translate(-50%, -50%) scale(0.9) !important; transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important; z-index: 200 !important; }
+    .jump-ghost.float { opacity: 0.8 !important; animation: floatGhost 3s infinite ease-in-out !important; filter: drop-shadow(0 0 15px rgba(100, 200, 255, 0.6)) !important; z-index: 40 !important; }
+    .jump-ghost.fade-out { opacity: 0 !important; transition: opacity 1s ease !important; }
+    @keyframes floatGhost { 0%, 100% { transform: translate(-50%, -60%) scale(0.8); } 50% { transform: translate(-50%, -70%) scale(0.8); } }
+
+    .dpad { position: absolute !important; bottom: 20px !important; left: 50% !important; transform: translateX(-50%) !important; display: flex !important; flex-direction: row !important; gap: 15px !important; z-index: 200 !important; opacity: 0.9 !important; transition: opacity 1s ease !important;}
+    .game-won .dpad { opacity: 0 !important; pointer-events: none !important; }
+    .dbtn { width: 45px !important; height: 45px !important; background: rgba(15, 52, 96, 0.95) !important; border: 2px solid #535c91 !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; color: #fff !important; cursor: pointer !important; user-select: none !important; backdrop-filter: blur(5px) !important; transition: 0.1s !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;}
+    .dbtn:active { background: #f39c12 !important; transform: scale(0.9) !important; border-color: #f39c12 !important; box-shadow: none !important;}
+
+    .modal-overlay { position: absolute !important; inset: 0 !important; background: rgba(0,0,0,0.85) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 0 !important; pointer-events: none !important; transition: 0.3s !important;}
+    .modal-overlay.show { opacity: 1 !important; pointer-events: auto !important; }
+    
+    .task-box { background-color: #111111 !important; border: 5px solid #444 !important; border-radius: 20px !important; padding: 30px !important; text-align: center !important; max-width: 90% !important; width: 500px !important; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9) !important; transform: scale(0.8) !important; transition: transform 0.3s ease, border-color 0.3s, background-color 0.3s, box-shadow 0.3s !important; color: #ffffff !important; opacity: 1 !important;}
+    .modal-overlay.show .task-box { transform: scale(1) !important; }
+    .task-box.monster-mode { border-color: #e50914 !important; box-shadow: 0 0 60px rgba(229, 9, 20, 0.8) !important; background-color: #1a0505 !important; }
+    
+    .error-state { border-color: #e50914 !important; box-shadow: 0 0 40px rgba(229, 9, 20, 0.8) !important; }
+    .success-glow { border-color: #2ecc71 !important; box-shadow: 0 0 60px rgba(46, 204, 113, 0.8) !important; background-color: rgba(10, 30, 15, 0.95) !important; transition: 0.2s !important;}
+
+    .icon-normal { font-size: 50px !important; margin-bottom: 10px !important; display: none !important; line-height: 1 !important; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)) !important;}
+    .timer-container { position: relative !important; width: 100% !important; height: 40px !important; background-color: #333333 !important; border-radius: 20px !important; margin-bottom: 25px !important; border: 3px solid #555555 !important; overflow: hidden !important; display: none !important; box-shadow: inset 0 0 15px #000 !important;}
+    .timer-container.active { display: block !important; }
+    .timer-bar { position: absolute !important; top: 0 !important; left: 0 !important; bottom: 0 !important; width: 100% !important; background-color: #e50914 !important; transition: width 1s linear !important; z-index: 1 !important; }
+    .timer-text { position: absolute !important; inset: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; color: #ffffff !important; font-size: 24px !important; font-weight: 900 !important; z-index: 2 !important; font-family: 'Montserrat', sans-serif !important; letter-spacing: 2px !important;}
+
+    .question { font-family: ${conf.qFont} !important; font-size: 26px !important; color: #ffffff !important; margin-bottom: 25px !important; line-height: 1.4 !important; font-weight: bold !important; }
+    
+    @keyframes shakeBtn { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+    
+    .ans-btn { background-color: #333333 !important; border: 2px solid #777 !important; color: #ffffff !important; font-family: ${conf.qFont} !important; font-weight: bold !important; font-size: 20px !important; padding: 15px 20px !important; margin: 6px auto !important; border-radius: 10px !important; cursor: pointer !important; transition: 0.2s !important; width: 100% !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; outline: none !important; display: block !important;}
+    .ans-btn:hover, .ans-btn.focused { background-color: #555555 !important; border-color: #f39c12 !important; transform: scale(1.02) !important; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5) !important;}
+    .ans-btn.wrong-ans { animation: shakeBtn 0.4s ease-in-out !important; background-color: #4a0000 !important; border-color: #e50914 !important; color: #ffaaaa !important; pointer-events: none !important; box-shadow: inset 0 0 10px #000 !important; transform: scale(0.98) !important; }
+    
+    .fill-input { width: 80% !important; max-width: 300px !important; padding: 12px 20px !important; font-family: ${conf.qFont} !important; font-size: 20px !important; font-weight: 700 !important; color: #fff !important; background-color: rgba(0,0,0,0.6) !important; border: 2px solid #f39c12 !important; border-radius: 10px !important; text-align: center !important; margin-bottom: 15px !important; outline: none !important; transition: 0.3s !important;}
+    .fill-input:focus { box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(243,156,18,0.8) !important; border-color: #fff !important; }
+    .fill-input.wrong-ans { animation: shakeBtn 0.4s ease-in-out !important; border-color: #e50914 !important; background-color: rgba(100,0,0,0.8) !important; }
+
+    .btn-main { font-family: ${conf.titleFont} !important; background-color: #f39c12 !important; color: #111 !important; font-weight: 800 !important; font-size: 24px !important; padding: 15px 40px !important; border: 3px solid #fff !important; border-radius: 30px !important; cursor: pointer !important; transition: 0.2s !important; text-transform: uppercase !important; box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;}
+    .btn-main:hover { transform: scale(1.05) !important; background-color: #fff !important; color: #f39c12 !important; border-color: #f39c12 !important;}
+
+    .title-huge { font-family: ${conf.titleFont} !important; background-color: #111 !important; color: ${conf.startColor} !important; font-size: clamp(30px, 6vw, 60px) !important; padding: 20px 40px !important; border-radius: 20px !important; border: 4px solid ${conf.startColor} !important; margin-bottom: 40px !important; box-shadow: 0 10px 40px ${conf.startColor} !important; text-align: center !important; text-transform: uppercase !important; line-height: 1.2 !important;}
+    
+    #btn-start { background-color: ${conf.startColor} !important; border-color: #fff !important; color: #111 !important; }
+    #btn-start:hover { background-color: #fff !important; color: ${conf.startColor} !important; border-color: ${conf.startColor} !important; }
+
+    .screen { position: absolute !important; inset: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; z-index: 999999 !important; padding: 20px !important; transition: 0.8s ease !important; background-color: rgba(0,0,0,0.95) !important; }
+    .screen.hidden { opacity: 0 !important; pointer-events: none !important; z-index: -10 !important; }
+    
+    #screen-win, #screen-over { background-color: rgba(0,0,0,0.3) !important; backdrop-filter: blur(2px) !important; }
+    .result-box { padding: 40px !important; border-radius: 20px !important; border: 4px solid #f39c12 !important; text-align: center !important; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 30px rgba(243, 156, 18, 0.4) !important; max-width: 600px !important; width: 90% !important; display: flex !important; flex-direction: column !important; align-items: center !important; transform: scale(0.9) !important; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+    .win-box { ${winBgStyle} }
+    .lose-box { ${loseBgStyle} }
+    
+    #screen-win:not(.hidden) .result-box, #screen-over:not(.hidden) .result-box { transform: scale(1) !important; }
+    .res-text { font-family: ${conf.titleFont} !important; color: #fff !important; font-size: 36px !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 30px !important; text-shadow: 2px 2px 10px #000 !important; line-height: 1.3 !important;}
+</style>
+</head>
+<body>
+
+<div id="game-container" tabindex="0">
+    <div class="top-bar"><div class="lives" id="lives-box"></div></div>
+    <div class="grid-board" id="board"></div>
+    <div class="dpad">
+        <div class="dbtn" onpointerdown="game.requestMove(-1, 0)">⬅️</div>
+        <div class="dbtn" onpointerdown="game.requestMove(0, -1)">⬆️</div>
+        <div class="dbtn" onpointerdown="game.requestMove(0, 1)">⬇️</div>
+        <div class="dbtn" onpointerdown="game.requestMove(1, 0)">➡️</div>
+    </div>
+    
+    <div class="modal-overlay" id="task-modal">
+        <div class="task-box" id="task-box">
+            <div class="icon-normal" id="icon-normal">❓</div>
+            <div class="timer-container" id="timer-cont"><div class="timer-bar" id="timer-bar"></div><div class="timer-text" id="timer-text">⏳</div></div>
+            <div class="question" id="question-text">Question?</div>
+            <div id="answers-container"></div>
+        </div>
+    </div>
+
+    <div id="screen-start" class="screen">
+        <div class="title-huge">${conf.title}</div>
+        <button class="btn-main" id="btn-start" onclick="if(window.game) game.start()">${conf.startText}</button>
+    </div>
+
+    <div id="screen-over" class="screen hidden">
+        <div class="result-box lose-box">
+            <div style="font-size: 80px; margin-bottom: 20px;">💀</div>
+            <div class="res-text">${conf.loseText}</div>
+            <button class="btn-main" id="btn-try" onclick="if(window.game) game.start()">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <div id="screen-win" class="screen hidden">
+        <div class="result-box win-box">
+            <div style="font-size: 70px; margin-bottom: 20px;">🚪🏃💨</div>
+            <div class="res-text">${conf.winText}</div>
+            <button class="btn-main" id="btn-win-restart" onclick="if(window.game) game.start()">PLAY AGAIN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    const dict = {
+        EN: { try: "TRY AGAIN", win: "PLAY AGAIN", next: "NEXT", check: "CHECK" },
+        RU: { try: "ЗАНОВО", win: "ИГРАТЬ ЕЩЕ", next: "ДАЛЕЕ", check: "ПРОВЕРИТЬ" },
+        ES: { try: "REINTENTAR", win: "JUGAR DE NUEVO", next: "SIGUIENTE", check: "COMPROBAR" },
+        FR: { try: "RÉESSAYER", win: "REJOUER", next: "SUIVANT", check: "VÉRIFIER" },
+        DE: { try: "NEUSTART", win: "NOCHMAL", next: "WEITER", check: "PRÜFEN" }
+    };
+    const lang = dict['${conf.lang}'] || dict['EN'];
+    document.getElementById('btn-try').innerText = lang.try;
+    document.getElementById('btn-win-restart').innerText = lang.win;
+
+    const TASKS = ${JSON.stringify(conf.tasks)};
+    const PLAYER_IMG = '${conf.playerImg}';
+    const MONSTER_IMG = '${conf.monsterImg}';
+    const SOUND_URL = '${conf.monsterSound}';
+    const TIME_SEC = parseInt('${conf.timer}') || 15;
+    const MAX_LIVES = parseInt('${conf.maxLives}') || 3;
+    const LIFE_IMG_VAL = '${conf.lifeImg}';
+    const EXIT_X = parseInt('${conf.exitX}');
+    const EXIT_Y = parseInt('${conf.exitY}');
+    const ROWS = 6; const COLS = 10; 
+    let audioObj = null; if(SOUND_URL) audioObj = new Audio(SOUND_URL);
+
+    const game = {
+        lives: MAX_LIVES, px: 0, py: 0, currentScaleX: 1, grid: [], 
+        isActive: false, isModalOpen: false, isAnimatingResult: false, pendingMove: null, currentGhostEl: null,
+        timerInterval: null, currentFocusIdx: 0, currentButtons: [],
+        
+        init: function() {
+            this.container = document.getElementById('game-container');
+            this.boardEl = document.getElementById('board');
+            this.modal = document.getElementById('task-modal');
+            this.tBox = document.getElementById('task-box');
+            this.timerCont = document.getElementById('timer-cont');
+            this.timerBar = document.getElementById('timer-bar');
+            this.timerText = document.getElementById('timer-text');
+            this.iconNormal = document.getElementById('icon-normal');
+            
+            window.addEventListener('keydown', (e) => {
+                const isInput = e.target.tagName === 'INPUT';
+                if (this.isModalOpen) {
+                    if (['ArrowUp','ArrowDown'].includes(e.key)) {
+                        e.preventDefault();
+                        if (this.currentButtons.length > 0) {
+                            this.currentButtons[this.currentFocusIdx].classList.remove('focused');
+                            if (e.key === 'ArrowDown') this.currentFocusIdx = (this.currentFocusIdx + 1) % this.currentButtons.length;
+                            if (e.key === 'ArrowUp') this.currentFocusIdx = (this.currentFocusIdx - 1 + this.currentButtons.length) % this.currentButtons.length;
+                            this.currentButtons[this.currentFocusIdx].classList.add('focused');
+                        }
+                    }
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        if (isInput && e.key !== 'Enter') return;
+                        e.preventDefault(); this.triggerEnter();
+                    }
+                    return;
+                }
+                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && !isInput) {
+                    e.preventDefault();
+                    if(this.isActive) {
+                        if(e.key === 'ArrowUp') this.requestMove(0, -1);
+                        if(e.key === 'ArrowDown') this.requestMove(0, 1);
+                        if(e.key === 'ArrowLeft') this.requestMove(-1, 0);
+                        if(e.key === 'ArrowRight') this.requestMove(1, 0);
+                    }
+                }
+            }, {passive: false, capture: true});
+            this.container.addEventListener('pointerdown', (e) => { if (e.target.tagName !== 'INPUT' && this.isActive) this.container.focus(); });
+        },
+
+        triggerEnter: function() { if (this.isModalOpen && this.currentButtons.length > 0) this.currentButtons[this.currentFocusIdx].click(); },
+
+        start: function() {
+            try {
+                document.getElementById('screen-start').classList.add('hidden');
+                document.getElementById('screen-over').classList.add('hidden');
+                document.getElementById('screen-win').classList.add('hidden');
+                this.container.classList.remove('game-won');
+                this.lives = MAX_LIVES; this.updateLives();
+                this.px = 0; this.py = 0; this.currentScaleX = 1; this.isModalOpen = false; this.isAnimatingResult = false;
+                this.buildGrid(); this.isActive = true; setTimeout(() => this.container.focus(), 100);
+            } catch(e) { console.error(e); }
+        },
+
+        updateLives: function() {
+            let html = ""; 
+            let isUrl = LIFE_IMG_VAL.startsWith('http') || LIFE_IMG_VAL.startsWith('data:');
+            for(let i=0; i<MAX_LIVES; i++) {
+                let content = isUrl ? \`<img src="\${LIFE_IMG_VAL}" style="width:100%;height:100%;object-fit:contain;">\` : LIFE_IMG_VAL;
+                html += \`<div class="heart \${i >= this.lives ? 'lost' : ''}">\${content}</div>\`;
+            }
+            document.getElementById('lives-box').innerHTML = html;
+        },
+
+        buildGrid: function() {
+            this.boardEl.innerHTML = ''; this.grid = []; let cellPool = [];
+            for(let y=0; y<ROWS; y++) {
+                let row = [];
+                for(let x=0; x<COLS; x++) {
+                    let cellDiv = document.createElement('div'); cellDiv.className = 'cell'; cellDiv.onclick = () => this.requestClickMove(x, y);
+                    if(x === EXIT_X && y === EXIT_Y) cellDiv.innerHTML = '<div class="exit-door">🚪</div>';
+                    this.boardEl.appendChild(cellDiv);
+                    let cellData = { x: x, y: y, el: cellDiv, visited: false, hasEncounter: false, isMonster: false, task: null };
+                    row.push(cellData);
+                    if (!(x===0 && y===0) && !(x===EXIT_X && y===EXIT_Y)) cellPool.push(cellData);
+                }
+                this.grid.push(row);
+            }
+            for (let i = cellPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cellPool[i], cellPool[j]] = [cellPool[j], cellPool[i]]; }
+            let availableTasks = [...TASKS];
+            for (let i = availableTasks.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [availableTasks[i], availableTasks[j]] = [availableTasks[j], availableTasks[i]]; }
+            let numMonsters = Math.min(7, cellPool.length);
+            for(let i=0; i<numMonsters; i++) {
+                let c = cellPool.pop(); c.hasEncounter = true; c.isMonster = true;
+                if (availableTasks.length > 0) c.task = availableTasks.pop(); else c.task = TASKS[Math.floor(Math.random() * TASKS.length)];
+            }
+            while(availableTasks.length > 0 && cellPool.length > 0) {
+                let c = cellPool.pop(); c.hasEncounter = true; c.isMonster = false; c.task = availableTasks.pop();
+            }
+            this.grid[0][0].visited = true; this.grid[0][0].el.classList.add('visited'); this.movePlayerVisuals();
+        },
+
+        movePlayerVisuals: function() {
+            let pEl = document.getElementById('player-sprite');
+            if(!pEl) { pEl = document.createElement('img'); pEl.id='player-sprite'; pEl.className='player'; pEl.src=PLAYER_IMG; }
+            pEl.style.transform = \`translate(-50%, -50%) scaleX(\${this.currentScaleX})\`;
+            this.grid[this.py][this.px].el.appendChild(pEl);
+        },
+
+        requestClickMove: function(tx, ty) {
+            if(!this.isActive || this.isModalOpen) return;
+            if(Math.abs(tx - this.px) + Math.abs(ty - this.py) !== 1) return; 
+            this.updateRotation(tx - this.px); this.processMove(tx, ty);
+        },
+
+        requestMove: function(dx, dy) {
+            if(!this.isActive || this.isModalOpen) return;
+            let tx = this.px + dx, ty = this.py + dy;
+            if(tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return;
+            this.updateRotation(dx); this.processMove(tx, ty);
+        },
+
+        updateRotation: function(dx) { if(dx === 1) this.currentScaleX = 1; else if(dx === -1) this.currentScaleX = -1; },
+
+        processMove: function(tx, ty) {
+            let targetCell = this.grid[ty][tx];
+            if(targetCell.visited) { this.px = tx; this.py = ty; this.movePlayerVisuals(); this.checkWin(); } 
+            else {
+                if(targetCell.hasEncounter) {
+                    this.pendingMove = {x: tx, y: ty, cell: targetCell};
+                    if(targetCell.isMonster) {
+                        this.isActive = false; targetCell.el.classList.add('monster-active');
+                        let ghost = document.createElement('img'); ghost.src = MONSTER_IMG; ghost.className = 'jump-ghost';
+                        let rect = targetCell.el.getBoundingClientRect(); let contRect = this.container.getBoundingClientRect();
+                        ghost.style.setProperty('--ox', (contRect.left + contRect.width / 2) - (rect.left + rect.width / 2) + 'px');
+                        ghost.style.setProperty('--oy', (contRect.top + contRect.height / 2) - (rect.top + rect.height / 2) + 'px');
+                        targetCell.el.appendChild(ghost); this.currentGhostEl = ghost;
+                        if(audioObj) { audioObj.currentTime = 0; audioObj.play().catch(e=>{}); }
+                        setTimeout(() => ghost.classList.add('scare'), 50);
+                        setTimeout(() => { ghost.classList.remove('scare'); ghost.classList.add('shrink'); }, 1800);
+                        setTimeout(() => { ghost.classList.remove('shrink'); ghost.classList.add('float'); this.showTask(targetCell); }, 3000);
+                    } else { this.showTask(targetCell); }
+                } else {
+                    targetCell.visited = true; targetCell.el.classList.add('visited'); 
+                    this.px = tx; this.py = ty; this.movePlayerVisuals(); this.checkWin();
+                }
+            }
+        },
+
+        showTask: function(cellData) {
+            this.isAnimatingResult = false;
+            clearInterval(this.timerInterval); this.isModalOpen = true;
+            let task = cellData.task, isMonster = cellData.isMonster;
+            document.getElementById('question-text').innerText = task.q;
+            let box = document.getElementById('answers-container'); box.innerHTML = '';
+            this.currentButtons = []; this.currentFocusIdx = 0;
+            
+            if (task.type === 'discuss') {
+                let btn = document.createElement('button'); btn.className = 'ans-btn focused'; btn.innerText = lang.next;
+                btn.onclick = () => { this.taskWin(); }; box.appendChild(btn); this.currentButtons.push(btn);
+            } else if (task.type === 'fill') {
+                let inp = document.createElement('input'); inp.type = 'text'; inp.className = 'fill-input'; inp.autocomplete = 'off'; inp.spellcheck = false;
+                let btn = document.createElement('button'); btn.className = 'ans-btn focused'; btn.innerText = lang.check;
+                
+                inp.oninput = () => inp.classList.remove('wrong-ans');
+                
+                const checkAns = () => { 
+                    if(this.isAnimatingResult) return;
+                    if(inp.value.trim().toLowerCase() === task.c.trim().toLowerCase()) { this.taskWin(); } 
+                    else { this.taskFail(inp); setTimeout(()=>inp.focus(), 50); } 
+                };
+                btn.onclick = checkAns; inp.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); checkAns(); } };
+                box.appendChild(inp); box.appendChild(btn); this.currentButtons.push(btn); setTimeout(() => inp.focus(), 100);
+            } else { 
+                let opts = [{t: task.c, corr: true}]; task.w.forEach(w => opts.push({t: w, corr: false}));
+                opts.sort(() => Math.random() - 0.5);
+                opts.forEach((opt, idx) => {
+                    let btn = document.createElement('button'); btn.className = 'ans-btn'; if (idx === 0) btn.classList.add('focused');
+                    btn.innerText = opt.t; 
+                    btn.onclick = (e) => { 
+                        if(this.isAnimatingResult) return; 
+                        if(opt.corr) this.taskWin(); 
+                        else this.taskFail(e.target); 
+                    };
+                    box.appendChild(btn); this.currentButtons.push(btn);
+                });
+            }
+            this.tBox.classList.remove('monster-mode', 'error-state', 'success-glow');
+            if(isMonster) { this.tBox.classList.add('monster-mode'); this.iconNormal.style.display = 'none'; this.timerCont.classList.add('active'); this.startTimer(); } 
+            else { this.iconNormal.style.display = 'block'; this.timerCont.classList.remove('active'); }
+            this.modal.classList.add('show');
+        },
+
+        startTimer: function() {
+            this.timerBar.style.transition = 'none'; this.timerBar.style.width = '100%'; this.timerText.innerText = \`⏳ \${TIME_SEC}\`; void this.timerBar.offsetWidth; 
+            let timeLeft = TIME_SEC; this.timerBar.style.transition = \`width \${TIME_SEC}s linear\`; this.timerBar.style.width = '0%';
+            this.timerInterval = setInterval(() => {
+                timeLeft--; if(timeLeft > 0) this.timerText.innerText = \`⏳ \${timeLeft}\`;
+                else { this.timerText.innerText = \`⏳ 0\`; clearInterval(this.timerInterval); this.taskFail(null); }
+            }, 1000);
+        },
+
+        taskWin: function() {
+            if (this.isAnimatingResult) return;
+            this.isAnimatingResult = true;
+            clearInterval(this.timerInterval); 
+            
+            this.tBox.classList.remove('error-state', 'monster-mode');
+            this.tBox.classList.add('success-glow');
+            
+            setTimeout(() => {
+                this.tBox.classList.remove('success-glow');
+                this.modal.classList.remove('show');
+                setTimeout(() => {
+                    let cell = this.pendingMove.cell; cell.el.classList.remove('monster-active'); cell.visited = true; cell.el.classList.add('visited'); cell.hasEncounter = false;
+                    this.currentGhostEl = null; this.px = this.pendingMove.x; this.py = this.pendingMove.y;
+                    this.movePlayerVisuals(); this.isModalOpen = false; this.isActive = true; this.container.focus(); this.checkWin();
+                }, 300);
+            }, 800);
+        },
+
+        taskFail: function(failedElement) {
+            if (this.isAnimatingResult) return;
+            
+            if (failedElement) {
+                failedElement.classList.remove('wrong-ans');
+                void failedElement.offsetWidth;
+                failedElement.classList.add('wrong-ans');
+            }
+
+            this.tBox.classList.add('error-state');
+
+            this.lives--; this.updateLives();
+            if(this.lives <= 0) {
+                this.isAnimatingResult = true;
+                clearInterval(this.timerInterval);
+                setTimeout(() => {
+                    this.modal.classList.remove('show'); this.isActive = false; 
+                    setTimeout(() => document.getElementById('screen-over').classList.remove('hidden'), 500); 
+                }, 400);
+            } 
+        },
+
+        checkWin: function() {
+            if(this.px === EXIT_X && this.py === EXIT_Y) {
+                this.isActive = false; this.grid[this.py][this.px].el.classList.add('door-glow');
+                for(let y=0; y<ROWS; y++) {
+                    for(let x=0; x<COLS; x++) {
+                        let cEl = this.grid[y][x].el; cEl.classList.add('visited'); 
+                        let ghost = cEl.querySelector('.jump-ghost'); if(ghost) ghost.classList.add('fade-out');
+                    }
+                }
+                this.container.classList.add('game-won'); setTimeout(() => document.getElementById('screen-win').classList.remove('hidden'), 2000);
+            }
+        }
+    };
+    window.game = game; game.init();
+})();
+<\/script>
+</body>
+</html>`;
+            
+            document.getElementById('generated-code').value = safeHtmlCode;
+            document.getElementById('previewFrame').srcdoc = safeHtmlCode;
+        }
+
+        function copyCode() {
+            generateCode(); 
+            const codeArea = document.getElementById('generated-code');
+            codeArea.select();
+            document.execCommand('copy');
+            const btn = document.getElementById('copyBtn');
+            btn.innerText = '✅ СКОПИРОВАНО!';
+            setTimeout(() => btn.innerText = 'СГЕНЕРИРОВАТЬ КОД', 2000);
+        }
+
+        let previewTimeout;
+        function debounceGenerate() { clearTimeout(previewTimeout); previewTimeout = setTimeout(generateCode, 600); }
+
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', debounceGenerate);
+            el.addEventListener('change', debounceGenerate);
+        });
+
+        generateCode();
+    </script>
+</body>
+</html>
