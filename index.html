@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Escape Editor v29</title>
+    <title>Dungeon Escape Editor v30</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #1a1a2e; color: #e0e0e0; display: flex; padding: 20px; gap: 30px; height: 100vh; margin: 0; box-sizing: border-box; }
@@ -305,7 +305,7 @@ bat | bird | mouse</textarea>
     .dbtn { width: 45px !important; height: 45px !important; background: rgba(15, 52, 96, 0.95) !important; border: 2px solid #535c91 !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; color: #fff !important; cursor: pointer !important; user-select: none !important; backdrop-filter: blur(5px) !important; transition: 0.1s !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;}
     .dbtn:active { background: #f39c12 !important; transform: scale(0.9) !important; border-color: #f39c12 !important; box-shadow: none !important;}
 
-    .modal-overlay { position: absolute !important; inset: 0 !important; background: rgba(0,0,0,0.85) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 0 !important; pointer-events: none !important; transition: 0.3s !important;}
+    .modal-overlay { position: absolute !important; inset: 0 !important; background: rgba(0,0,0,0.2) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 0 !important; pointer-events: none !important; transition: 0.3s !important;}
     .modal-overlay.show { opacity: 1 !important; pointer-events: auto !important; }
     
     .task-box { background-color: #111111 !important; border: 5px solid #444 !important; border-radius: 20px !important; padding: 30px !important; text-align: center !important; max-width: 90% !important; width: 500px !important; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9) !important; transform: scale(0.8) !important; transition: transform 0.3s ease, border-color 0.3s, background-color 0.3s, box-shadow 0.3s !important; color: #ffffff !important; opacity: 1 !important;}
@@ -341,10 +341,10 @@ bat | bird | mouse</textarea>
     #btn-start { background-color: ${conf.startColor} !important; border-color: #fff !important; color: #111 !important; }
     #btn-start:hover { background-color: #fff !important; color: ${conf.startColor} !important; border-color: ${conf.startColor} !important; }
 
-    .screen { position: absolute !important; inset: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; z-index: 999999 !important; padding: 20px !important; transition: 0.8s ease !important; background-color: rgba(0,0,0,0.95) !important; }
+    .screen { position: absolute !important; inset: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; z-index: 999999 !important; padding: 20px !important; transition: 0.8s ease !important; background-color: rgba(0,0,0,0.2) !important; }
     .screen.hidden { opacity: 0 !important; pointer-events: none !important; z-index: -10 !important; }
     
-    #screen-win, #screen-over { background-color: rgba(0,0,0,0.85) !important; backdrop-filter: blur(5px) !important; }
+    #screen-start { background-color: rgba(0,0,0,0.95) !important; }
     .result-box { text-align: center !important; width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; transform: scale(0.9) !important; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
     .result-img { max-width: 90vw !important; max-height: 50vh !important; object-fit: contain !important; margin-bottom: 20px !important; filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)) !important; }
     
@@ -436,7 +436,17 @@ bat | bird | mouse</textarea>
             this.iconNormal = document.getElementById('icon-normal');
             
             window.addEventListener('keydown', (e) => {
+                e.stopPropagation(); // Не дает внешним платформам менять слайд!
                 const isInput = e.target.tagName === 'INPUT';
+                
+                if (isInput) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.triggerEnter();
+                    }
+                    return; 
+                }
+
                 if (this.isModalOpen) {
                     if (['ArrowUp','ArrowDown'].includes(e.key)) {
                         e.preventDefault();
@@ -448,12 +458,13 @@ bat | bird | mouse</textarea>
                         }
                     }
                     if (e.key === 'Enter' || e.key === ' ') {
-                        if (isInput && e.key !== 'Enter') return;
-                        e.preventDefault(); this.triggerEnter();
+                        e.preventDefault();
+                        this.triggerEnter();
                     }
                     return;
                 }
-                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && !isInput) {
+
+                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
                     e.preventDefault();
                     if(this.isActive) {
                         if(e.key === 'ArrowUp') this.requestMove(0, -1);
@@ -462,7 +473,8 @@ bat | bird | mouse</textarea>
                         if(e.key === 'ArrowRight') this.requestMove(1, 0);
                     }
                 }
-            }, {passive: false, capture: true});
+            }, {passive: false});
+            
             this.container.addEventListener('pointerdown', (e) => { if (e.target.tagName !== 'INPUT' && this.isActive) this.container.focus(); });
         },
 
@@ -582,12 +594,20 @@ bat | bird | mouse</textarea>
                 
                 inp.oninput = () => inp.classList.remove('wrong-ans');
                 
+                // Дополнительная локальная блокировка нажатий внутри инпута
+                inp.onkeydown = (e) => { 
+                    e.stopPropagation(); 
+                    if(e.key === 'Enter') { e.preventDefault(); checkAns(); } 
+                };
+                inp.onkeyup = (e) => e.stopPropagation();
+                inp.onkeypress = (e) => e.stopPropagation();
+                
                 const checkAns = () => { 
                     if(this.isAnimatingResult) return;
                     if(inp.value.trim().toLowerCase() === task.c.trim().toLowerCase()) { this.taskWin(); } 
                     else { this.taskFail(inp); setTimeout(()=>inp.focus(), 50); } 
                 };
-                btn.onclick = checkAns; inp.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); checkAns(); } };
+                btn.onclick = checkAns; 
                 box.appendChild(inp); box.appendChild(btn); this.currentButtons.push(btn); setTimeout(() => inp.focus(), 100);
             } else { 
                 let opts = [{t: task.c, corr: true}]; task.w.forEach(w => opts.push({t: w, corr: false}));
