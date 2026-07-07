@@ -10,6 +10,8 @@
         .editor-panel, .preview-panel { background-color: #16213e; padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
         .editor-panel { width: 45%; display: flex; flex-direction: column; overflow-y: auto; }
         .preview-panel { width: 55%; display: flex; flex-direction: column; position: relative; padding-bottom: 40px;}
+        .editor-panel::-webkit-scrollbar { width: 8px; }
+        .editor-panel::-webkit-scrollbar-thumb { background: #535c91; border-radius: 4px; }
         
         h1, h2 { color: #f39c12; font-weight: 700; letter-spacing: 1px; font-size: 26px; margin-top: 0; text-align: center; }
         h3 { color: #a1c4fd; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #535c91; padding-bottom: 5px; margin-top: 20px;}
@@ -34,6 +36,12 @@
         .m-cell:hover { background: #f39c12; }
         .m-cell.start { background: #2ecc71; cursor: not-allowed; }
         .m-cell.exit { background: #e74c3c; box-shadow: 0 0 10px #e74c3c;}
+        
+        .input-with-button { display: flex; gap: 10px; }
+        .input-with-button input { flex: 1; }
+        .upload-btn { padding: 0 15px; border-radius: 8px; border: 1px solid #535c91; background-color: #0f3460; color: #f39c12; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .upload-btn:hover { background-color: rgba(243, 156, 18, 0.1); border-color: #f39c12; }
+        .hint { font-size: 11px; color: #b3b3b3; margin-top: 5px; line-height: 1.4;}
     </style>
 </head>
 <body>
@@ -82,12 +90,22 @@
 
         <div class="flex-row">
             <div class="form-group" style="flex:1;">
-                <label>Картинка игрока (Ссылка)</label>
-                <input type="text" id="playerImg" value="https://i.postimg.cc/TwfvJZhB/fiska.png">
+                <label>Картинка игрока</label>
+                <div class="input-with-button">
+                    <input type="text" id="playerImg" value="https://i.postimg.cc/TwfvJZhB/fiska.png">
+                    <button class="upload-btn" onclick="document.getElementById('playerImg-file').click()">📂</button>
+                </div>
+                <input type="file" id="playerImg-file" accept="image/*" style="display:none;" data-target="playerImg" data-limit="2097152" onchange="handleFileUpload(event)">
+                <div class="hint">(до 2 МБ)</div>
             </div>
             <div class="form-group" style="flex:1;">
-                <label>Фон игры (Ссылка)</label>
-                <input type="text" id="bgUrl" value="https://i.postimg.cc/hj7TFTLk/49581d354f7fe9e4db35c30ef5f33045-d4e8a47e-5a0e-4a7d-b8ae-c0020c60d2cc.jpg">
+                <label>Фон игры</label>
+                <div class="input-with-button">
+                    <input type="text" id="bgUrl" value="https://i.postimg.cc/hj7TFTLk/49581d354f7fe9e4db35c30ef5f33045-d4e8a47e-5a0e-4a7d-b8ae-c0020c60d2cc.jpg">
+                    <button class="upload-btn" onclick="document.getElementById('bgUrl-file').click()">📂</button>
+                </div>
+                <input type="file" id="bgUrl-file" accept="image/*" style="display:none;" data-target="bgUrl" data-limit="5242880" onchange="handleFileUpload(event)">
+                <div class="hint">(до 5 МБ)</div>
             </div>
         </div>
         
@@ -97,8 +115,13 @@
                 <input type="number" id="maxLives" value="3" min="1" max="10">
             </div>
             <div class="form-group" style="flex:2;">
-                <label>Картинка жизни (Ссылка или Эмодзи ❤️)</label>
-                <input type="text" id="lifeImg" value="❤️">
+                <label>Картинка жизни (или Эмодзи ❤️)</label>
+                <div class="input-with-button">
+                    <input type="text" id="lifeImg" value="❤️">
+                    <button class="upload-btn" onclick="document.getElementById('lifeImg-file').click()">📂</button>
+                </div>
+                <input type="file" id="lifeImg-file" accept="image/*" style="display:none;" data-target="lifeImg" data-limit="2097152" onchange="handleFileUpload(event)">
+                <div class="hint">(до 2 МБ)</div>
             </div>
         </div>
 
@@ -110,12 +133,22 @@
             </div>
             <div style="flex: 1;">
                 <div class="form-group">
-                    <label>Картинка Привидения (Ссылка)</label>
-                    <input type="text" id="monsterImg" value="https://i.postimg.cc/XYTD97Dv/ghost-(2).png">
+                    <label>Картинка Привидения</label>
+                     <div class="input-with-button">
+                        <input type="text" id="monsterImg" value="https://i.postimg.cc/XYTD97Dv/ghost-(2).png">
+                        <button class="upload-btn" onclick="document.getElementById('monsterImg-file').click()">📂</button>
+                    </div>
+                    <input type="file" id="monsterImg-file" accept="image/*" style="display:none;" data-target="monsterImg" data-limit="2097152" onchange="handleFileUpload(event)">
+                    <div class="hint">(до 2 МБ)</div>
                 </div>
                 <div class="form-group">
-                    <label>Звук Монстра (Ссылка)</label>
-                    <input type="text" id="monsterSound" value="https://actions.google.com/sounds/v1/horror/monster_zombie_growl.ogg">
+                    <label>Звук Монстра</label>
+                     <div class="input-with-button">
+                        <input type="text" id="monsterSound" value="https://actions.google.com/sounds/v1/horror/monster_zombie_growl.ogg">
+                        <button class="upload-btn" onclick="document.getElementById('monsterSound-file').click()">📂</button>
+                    </div>
+                    <input type="file" id="monsterSound-file" accept="audio/*" style="display:none;" data-target="monsterSound" data-limit="5242880" onchange="handleFileUpload(event)">
+                    <div class="hint">(до 5 МБ)</div>
                 </div>
                 <div class="form-group">
                     <label>Время таймера (сек)</label>
@@ -151,8 +184,13 @@ bat | bird | mouse</textarea>
                 <input type="text" id="winText" value="You escaped the mansion!">
             </div>
             <div class="form-group" style="flex:1;">
-                <label>Картинка при победе (посередине)</label>
-                <input type="text" id="winBg" placeholder="Оставьте пустым для текста">
+                <label>Картинка при победе</label>
+                 <div class="input-with-button">
+                    <input type="text" id="winBg" placeholder="Оставьте пустым для текста">
+                    <button class="upload-btn" onclick="document.getElementById('winBg-file').click()">📂</button>
+                </div>
+                <input type="file" id="winBg-file" accept="image/*" style="display:none;" data-target="winBg" data-limit="2097152" onchange="handleFileUpload(event)">
+                <div class="hint">(до 2 МБ)</div>
             </div>
         </div>
         <div class="flex-row">
@@ -161,8 +199,13 @@ bat | bird | mouse</textarea>
                 <input type="text" id="loseText" value="YOU DIED IN THE DARKNESS">
             </div>
             <div class="form-group" style="flex:1;">
-                <label>Картинка при поражении (посередине)</label>
-                <input type="text" id="loseBg" placeholder="Оставьте пустым для текста">
+                <label>Картинка при поражении</label>
+                 <div class="input-with-button">
+                    <input type="text" id="loseBg" placeholder="Оставьте пустым для текста">
+                    <button class="upload-btn" onclick="document.getElementById('loseBg-file').click()">📂</button>
+                </div>
+                <input type="file" id="loseBg-file" accept="image/*" style="display:none;" data-target="loseBg" data-limit="2097152" onchange="handleFileUpload(event)">
+                <div class="hint">(до 2 МБ)</div>
             </div>
         </div>
         
@@ -177,6 +220,31 @@ bat | bird | mouse</textarea>
     </div>
 
     <script>
+        function handleFileUpload(event) {
+            const fileInput = event.target;
+            const targetInputId = fileInput.dataset.target;
+            const sizeLimit = parseInt(fileInput.dataset.limit);
+            const targetInput = document.getElementById(targetInputId);
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            if (file.size > sizeLimit) {
+                alert(`Файл слишком большой! Макс. размер: ${(sizeLimit / 1024 / 1024).toFixed(1)} МБ.`);
+                fileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                targetInput.value = e.target.result;
+                debounceGenerate();
+            };
+            reader.onerror = () => alert('Не удалось прочитать файл.');
+            reader.readAsDataURL(file);
+            fileInput.value = '';
+        }
+
         const fontOptions = `
             <option value="'Montserrat', sans-serif">Montserrat (Базовый)</option>
             <option value="'Russo One', sans-serif" selected>Russo One (Мощный)</option>
@@ -594,7 +662,6 @@ bat | bird | mouse</textarea>
                 
                 inp.oninput = () => inp.classList.remove('wrong-ans');
                 
-                // Дополнительная локальная блокировка нажатий внутри инпута
                 inp.onkeydown = (e) => { 
                     e.stopPropagation(); 
                     if(e.key === 'Enter') { e.preventDefault(); checkAns(); } 
